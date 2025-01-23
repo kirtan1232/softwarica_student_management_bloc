@@ -34,9 +34,19 @@ class CourseRemoteDataSource implements ICourseDataSource {
   }
 
   @override
-  Future<void> deleteCourse(String id) {
-    // TODO: implement deleteBatch
-    throw UnimplementedError();
+  Future<void> deleteCourse(String id)async {
+    try {
+      var response = await _dio.delete(ApiEndpoints.deleteCourse + id);
+      if (response.statusCode != 204) {
+        // Assuming 204 No Content for a successful delete
+        throw Exception(
+            'Failed to delete the course: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      throw Exception(e);
+    } catch (e) {
+      throw Exception(e);
+    }
   }
 
   @override
