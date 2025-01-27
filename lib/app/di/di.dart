@@ -3,7 +3,9 @@ import 'package:get_it/get_it.dart';
 import 'package:softwarica_student_management_bloc/core/network/api_service.dart';
 import 'package:softwarica_student_management_bloc/core/network/hive_service.dart';
 import 'package:softwarica_student_management_bloc/features/auth/data/data_source/local_data_source/auth_local_datasource.dart';
+import 'package:softwarica_student_management_bloc/features/auth/data/data_source/remote_data_source/auth_remote_datasource.dart';
 import 'package:softwarica_student_management_bloc/features/auth/data/repository/auth_local_repository/auth_local_repository.dart';
+import 'package:softwarica_student_management_bloc/features/auth/data/repository/auth_remote_repository.dart';
 import 'package:softwarica_student_management_bloc/features/auth/domain/use_case/login_usecase.dart';
 import 'package:softwarica_student_management_bloc/features/auth/domain/use_case/register_user_usecase.dart';
 import 'package:softwarica_student_management_bloc/features/auth/presentation/view_model/login/login_bloc.dart';
@@ -43,14 +45,14 @@ Future<void> initDependencies() async {
   await _initSplashScreenDependencies();
 }
 
-_initHiveService() {
-  getIt.registerLazySingleton<HiveService>(() => HiveService());
-}
-
 _initApiService() {
   getIt.registerLazySingleton<Dio>(
     () => ApiService(Dio()).dio,
   );
+}
+
+_initHiveService() {
+  getIt.registerLazySingleton<HiveService>(() => HiveService());
 }
 
 _initRegisterDependencies() {
@@ -59,15 +61,23 @@ _initRegisterDependencies() {
     () => AuthLocalDataSource(getIt<HiveService>()),
   );
 
+  getIt.registerLazySingleton<AuthRemoteDataSource>(
+    () => AuthRemoteDataSource(getIt<Dio>()),
+  );
+
   // init local repository
   getIt.registerLazySingleton(
     () => AuthLocalRepository(getIt<AuthLocalDataSource>()),
   );
 
+  getIt.registerLazySingleton(
+    () => AuthRemoteRepository(getIt<AuthRemoteDataSource>()),
+  );
+
   // register use usecase
   getIt.registerLazySingleton<RegisterUseCase>(
     () => RegisterUseCase(
-      getIt<AuthLocalRepository>(),
+      getIt<AuthRemoteRepository>(),
     ),
   );
 
@@ -81,42 +91,30 @@ _initRegisterDependencies() {
 }
 
 _initCourseDependencies() {
-  // Data Source
+  // local Data Source
   getIt.registerFactory<CourseLocalDataSource>(
       () => CourseLocalDataSource(hiveService: getIt<HiveService>()));
 
-  getIt.registerFactory<CourseRemoteDataSource>(
-      () => CourseRemoteDataSource(dio: getIt<Dio>()));
+  // Remote Data Dource
+  getIt.registerLazySingleton<CourseRemoteDataSource>(
+    () => CourseRemoteDataSource(
+      dio: getIt<Dio>(),
+    ),
+  );
 
-  // Repository
+  // local Repository
   getIt.registerLazySingleton<CourseLocalRepository>(() =>
       CourseLocalRepository(
           courseLocalDataSource: getIt<CourseLocalDataSource>()));
 
-  getIt.registerLazySingleton<CourseRemoteRepository>(
-      () => CourseRemoteRepository(
-            remoteDataSource: getIt<CourseRemoteDataSource>(),
-          ));
+  // Remote Repository
+  getIt.registerLazySingleton(
+    () => CourseRemoteRepository(
+      remoteDataSource: getIt<CourseRemoteDataSource>(),
+    ),
+  );
 
   // Usecases
-  // getIt.registerLazySingleton<CreateCourseUsecase>(
-  //   () => CreateCourseUsecase(
-  //     courseRepository: getIt<CourseLocalRepository>(),
-  //   ),
-  // );
-
-  // getIt.registerLazySingleton<GetAllCourseUsecase>(
-  //   () => GetAllCourseUsecase(
-  //     courseRepository: getIt<CourseLocalRepository>(),
-  //   ),
-  // );
-
-  // getIt.registerLazySingleton<DeleteCourseUsecase>(
-  //   () => DeleteCourseUsecase(
-  //     courseRepository: getIt<CourseLocalRepository>(),
-  //   ),
-  // );
-
   getIt.registerLazySingleton<CreateCourseUsecase>(
     () => CreateCourseUsecase(
       courseRepository: getIt<CourseRemoteRepository>(),
@@ -147,41 +145,40 @@ _initCourseDependencies() {
 }
 
 _initBatchDependencies() async {
-  // Data Source
+  // Local Data Source
   getIt.registerFactory<BatchLocalDataSource>(
       () => BatchLocalDataSource(hiveService: getIt<HiveService>()));
 
-  getIt.registerFactory<BatchRemoteDataSource>(
-      () => BatchRemoteDataSource(dio: getIt<Dio>()));
+  // Remote Data Dource
+  getIt.registerLazySingleton<BatchRemoteDataSource>(
+    () => BatchRemoteDataSource(
+      dio: getIt<Dio>(),
+    ),
+  );
 
-  // Repository
+  // Local Repository
   getIt.registerLazySingleton<BatchLocalRepository>(() => BatchLocalRepository(
       batchLocalDataSource: getIt<BatchLocalDataSource>()));
 
-  getIt.registerLazySingleton<BatchRemoteRepository>(() =>
-      BatchRemoteRepository(remoteDataSource: getIt<BatchRemoteDataSource>()));
+  // Remote Repository
+  getIt.registerLazySingleton(
+    () => BatchRemoteRepository(
+      remoteDataSource: getIt<BatchRemoteDataSource>(),
+    ),
+  );
 
   // Usecases
   getIt.registerLazySingleton<CreateBatchUseCase>(
     () => CreateBatchUseCase(batchRepository: getIt<BatchRemoteRepository>()),
   );
-  // getIt.registerLazySingleton<CreateBatchUseCase>(
-  //   () => CreateBatchUseCase(batchRepository: getIt<BatchLocalRepository>()),
-  // );
 
   getIt.registerLazySingleton<GetAllBatchUseCase>(
     () => GetAllBatchUseCase(batchRepository: getIt<BatchRemoteRepository>()),
   );
-  // getIt.registerLazySingleton<GetAllBatchUseCase>(
-  //   () => GetAllBatchUseCase(batchRepository: getIt<BatchLocalRepository>()),
-  // );
 
   getIt.registerLazySingleton<DeleteBatchUsecase>(
     () => DeleteBatchUsecase(batchRepository: getIt<BatchRemoteRepository>()),
   );
-  // getIt.registerLazySingleton<DeleteBatchUsecase>(
-  //   () => DeleteBatchUsecase(batchRepository: getIt<BatchLocalRepository>()),
-  // );
 
   // Bloc
   getIt.registerFactory<BatchBloc>(
@@ -202,7 +199,7 @@ _initHomeDependencies() async {
 _initLoginDependencies() async {
   getIt.registerLazySingleton<LoginUseCase>(
     () => LoginUseCase(
-      getIt<AuthLocalRepository>(),
+      getIt<AuthRemoteRepository>(),
     ),
   );
 

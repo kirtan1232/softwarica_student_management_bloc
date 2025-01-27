@@ -15,7 +15,6 @@ class CourseRemoteDataSource implements ICourseDataSource {
   @override
   Future<void> createCourse(CourseEntity course) async {
     try {
-      // Convert entity to model
       var courseApiModel = CourseApiModel.fromEntity(course);
       var response = await _dio.post(
         ApiEndpoints.createCourse,
@@ -34,27 +33,29 @@ class CourseRemoteDataSource implements ICourseDataSource {
   }
 
   @override
-  Future<void> deleteCourse(String id)async {
+  Future<void> deleteCourse(String id) async {
     try {
-      var response = await _dio.delete(ApiEndpoints.deleteCourse + id);
-      if (response.statusCode != 204) {
-        // Assuming 204 No Content for a successful delete
-        throw Exception(
-            'Failed to delete the course: ${response.statusMessage}');
+      final response = await _dio.delete('${ApiEndpoints.deleteCourse}$id');
+      if (response.statusCode == 204) {
+        // Successful delete, return nothing
+        await getCourses();
+        return;
+      } else {
+        // Handle unexpected status codes
+        throw Exception('Failed to delete course: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      throw Exception(e);
+      throw Exception('DioException: ${e.response?.data ?? e.message}');
     } catch (e) {
-      throw Exception(e);
+      throw Exception('Unexpected error: $e');
     }
   }
 
   @override
-  Future<List<CourseEntity>> getCourses()async {
+  Future<List<CourseEntity>> getCourses() async {
     try {
       var response = await _dio.get(ApiEndpoints.getAllCourse);
       if (response.statusCode == 200) {
-        // Convert json to model
         GetAllCourseDto courseAddDTO = GetAllCourseDto.fromJson(response.data);
         return CourseApiModel.toEntityList(courseAddDTO.data);
       } else {
@@ -65,6 +66,5 @@ class CourseRemoteDataSource implements ICourseDataSource {
     } catch (e) {
       throw Exception(e);
     }
-   
   }
 }
