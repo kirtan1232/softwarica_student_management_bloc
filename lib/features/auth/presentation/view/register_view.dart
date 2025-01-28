@@ -23,11 +23,11 @@ class RegisterView extends StatefulWidget {
 class _RegisterViewState extends State<RegisterView> {
   final _gap = const SizedBox(height: 8);
   final _key = GlobalKey<FormState>();
-  final _fnameController = TextEditingController(text: 'kiran');
-  final _lnameController = TextEditingController(text: 'rana');
+  final _fnameController = TextEditingController(text: 'kirtan');
+  final _lnameController = TextEditingController(text: 'shrestha');
   final _phoneController = TextEditingController(text: '123456789');
-  final _usernameController = TextEditingController(text: 'kiran');
-  final _passwordController = TextEditingController(text: 'kiran123');
+  final _usernameController = TextEditingController(text: 'kirtan');
+  final _passwordController = TextEditingController(text: '1234');
 
   BatchEntity? _dropDownValue;
   final List<CourseEntity> _lstCourseSelected = [];
@@ -46,6 +46,9 @@ class _RegisterViewState extends State<RegisterView> {
       if (image != null) {
         setState(() {
           _img = File(image.path);
+          context.read<RegisterBloc>().add(
+                LoadImage(file: _img!),
+              );
           //Send image to server
         });
       } else {
@@ -266,6 +269,9 @@ class _RegisterViewState extends State<RegisterView> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_key.currentState!.validate()) {
+                          final registerState =
+                              context.read<RegisterBloc>().state;
+                          final imageName = registerState.imageName;
                           context.read<RegisterBloc>().add(
                                 RegisterStudent(
                                   context: context,
@@ -276,6 +282,7 @@ class _RegisterViewState extends State<RegisterView> {
                                   courses: _lstCourseSelected,
                                   username: _usernameController.text,
                                   password: _passwordController.text,
+                                  image: imageName,
                                 ),
                               );
                         }
