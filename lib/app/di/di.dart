@@ -8,6 +8,7 @@ import 'package:softwarica_student_management_bloc/features/auth/data/repository
 import 'package:softwarica_student_management_bloc/features/auth/data/repository/auth_remote_repository.dart';
 import 'package:softwarica_student_management_bloc/features/auth/domain/use_case/login_usecase.dart';
 import 'package:softwarica_student_management_bloc/features/auth/domain/use_case/register_user_usecase.dart';
+import 'package:softwarica_student_management_bloc/features/auth/domain/use_case/uploadImage_usecase.dart';
 import 'package:softwarica_student_management_bloc/features/auth/presentation/view_model/login/login_bloc.dart';
 import 'package:softwarica_student_management_bloc/features/auth/presentation/view_model/signup/register_bloc.dart';
 import 'package:softwarica_student_management_bloc/features/batch/data/data_source/batch_local_data_source.dart';
@@ -81,11 +82,18 @@ _initRegisterDependencies() {
     ),
   );
 
+  getIt.registerLazySingleton<UploadImageUsecase>(
+    () => UploadImageUsecase(
+      getIt<AuthRemoteRepository>(),
+    ),
+  );
+
   getIt.registerFactory<RegisterBloc>(
     () => RegisterBloc(
       batchBloc: getIt<BatchBloc>(),
       courseBloc: getIt<CourseBloc>(),
       registerUseCase: getIt(),
+      uploadImageUsecase: getIt(),
     ),
   );
 }
